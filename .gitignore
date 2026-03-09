@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Model outputs and training artifacts
+output/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+tensorboard/
+runs/
+logs/
+
+# Generated data files
+data_split.json
+train_split.txt
+val_split.txt
+test_split.txt
+
+# Predictions and test outputs
+test_predictions/
+predictions/
+results/
+
+# Dataset (comment out if you want to include it)
+# Datacluster Fire and Smoke Sample/
+# Annotations/
+
+# OS
+Thumbs.db
+.DS_Store
+*.log
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
