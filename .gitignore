@@ -11,22 +11,29 @@ build/
 # Virtual Environment
 .venv/
 venv/
-ENV/
 env/
+ENV/
+env.bak/
+venv.bak/
 
 # PyTorch
 *.pth
 *.pt
+*.ckpt
 
 # Training outputs
 output/
+checkpoints/
 runs/
 tensorboard/
+logs/
 
 # Test outputs
 test_images/
 test_predictions/
 test_results/
+predictions/
+results/
 
 # Data
 Annotations/
@@ -35,6 +42,12 @@ Datacluster Fire and Smoke Sample/
 *.png
 *.jpeg
 !cn2vf_net_architecture.png
+
+# Generated data files
+data_split.json
+train_split.txt
+val_split.txt
+test_split.txt
 
 # IDE
 .vscode/
@@ -56,3 +69,43 @@ Thumbs.db
 *.zip
 *.tar.gz
 *.rar
+
+# OS
+Thumbs.db
+.DS_Store
+*.log
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+>>>>>>> bba37dba64f081f93fd79f554966f380eb26c5fa
