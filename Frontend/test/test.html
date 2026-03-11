@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CN2VF-Net | Detection Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;600;800&family=Space+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="test.css">
+</head>
+<body>
+
+<!-- SIREN EFFECT -->
+<div class="siren" id="siren">
+  <div class="siren-overlay"></div>
+  <div class="siren-bar"></div>
+</div>
+
+<!-- TOAST ALERT -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">🔥</span>
+  <div>
+    <div class="toast-title" id="toastTitle">FIRE DETECTED</div>
+    <div class="toast-body" id="toastBody">High confidence fire detection. Immediate action recommended.</div>
+  </div>
+</div>
+
+<nav>
+  <a href="../index/index.html" class="logo">CN2VF-NET</a>
+  <a href="../index/index.html" class="back-btn">← Back to Home</a>
+</nav>
+
+<main>
+  <div style="margin-bottom:8px;font-family:'Space Mono',monospace;font-size:0.7rem;color:#ff5500;letter-spacing:3px;">// detection demo</div>
+  <h1 class="page-title">Test the <span>Model</span></h1>
+  <p class="page-sub">Upload an image or video, or use your live camera to detect fire and smoke. Results include confidence scores and bounding box coordinates.</p>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('image')">🖼️ &nbsp;Image</button>
+    <button class="tab-btn" onclick="switchTab('video')">🎥 &nbsp;Video</button>
+    <button class="tab-btn" onclick="switchTab('camera')">📷 &nbsp;Camera</button>
+  </div>
+
+  <!-- IMAGE PANEL -->
+  <div class="panel active" id="panel-image">
+    <div class="drop-zone" id="dropZone"
+         onclick="document.getElementById('imgInput').click()"
+         ondragover="handleDragOver(event)"
+         ondragleave="handleDragLeave(event)"
+         ondrop="handleDrop(event,'image')">
+      <span class="drop-icon">🖼️</span>
+      <div class="drop-title">Drop your image here</div>
+      <div class="drop-sub">Supports JPG, PNG, WEBP · Max 20MB</div>
+      <button class="drop-btn" onclick="event.stopPropagation();document.getElementById('imgInput').click()">Choose Image</button>
+      <input type="file" id="imgInput" accept="image/*" onchange="handleImageFile(this)">
+    </div>
+
+    <div class="preview-container" id="imgPreview">
+      <div class="preview-wrap">
+        <img id="previewImg" src="" alt="Preview">
+        <canvas id="resultCanvas"></canvas>
+      </div>
+      <button class="analyze-btn" id="analyzeImgBtn" onclick="analyzeImage()">🔍 &nbsp; Analyze for Fire & Smoke</button>
+    </div>
+
+    <div class="processing" id="imgProcessing">
+      <div class="spinner"></div>
+      <span class="processing-text">Running CN2VF-Net inference... Analyzing pixel patterns...</span>
+    </div>
+  </div>
+
+  <!-- VIDEO PANEL -->
+  <div class="panel" id="panel-video">
+    <div class="drop-zone" id="dropZoneVid"
+         onclick="document.getElementById('vidInput').click()"
+         ondragover="handleDragOver(event,true)"
+         ondragleave="handleDragLeave(event,true)"
+         ondrop="handleDrop(event,'video')">
+      <span class="drop-icon">🎥</span>
+      <div class="drop-title">Drop your video here</div>
+      <div class="drop-sub">Supports MP4, MOV, AVI, WEBM · Max 100MB</div>
+      <button class="drop-btn" onclick="event.stopPropagation();document.getElementById('vidInput').click()">Choose Video</button>
+      <input type="file" id="vidInput" accept="video/*" onchange="handleVideoFile(this)">
+    </div>
+
+    <div class="preview-container" id="vidPreview">
+      <video id="videoPreview" controls></video>
+      <button class="analyze-btn" id="analyzeVidBtn" onclick="analyzeVideo()">🔍 &nbsp; Analyze Video for Fire & Smoke</button>
+    </div>
+
+    <div class="processing" id="vidProcessing">
+      <div class="spinner"></div>
+      <span class="processing-text" id="vidProcessingText">Scanning video frames... Detecting fire signatures...</span>
+    </div>
+  </div>
+
+  <!-- CAMERA PANEL -->
+  <div class="panel" id="panel-camera">
+    <div class="camera-box">
+      <video id="cameraFeed" autoplay playsinline></video>
+      <div class="camera-placeholder" id="camPlaceholder">
+        <span class="cam-icon">📷</span>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;">Camera not started</div>
+        <div style="font-size:0.82rem;margin-top:6px;">Click "Start Camera" to begin</div>
+      </div>
+    </div>
+    <div class="camera-controls">
+      <button class="cam-btn cam-btn-start" onclick="startCamera()">📷 Start Camera</button>
+      <button class="cam-btn cam-btn-detect" onclick="captureAndAnalyze()">🔍 Capture & Detect</button>
+      <button class="cam-btn cam-btn-stop" onclick="stopCamera()">⏹ Stop Camera</button>
+    </div>
+    <div class="processing" id="camProcessing">
+      <div class="spinner"></div>
+      <span class="processing-text">Analyzing captured frame...</span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-section" id="resultsSection">
+    <div class="alert-banner" id="alertBanner">
+      <span class="alert-icon" id="alertIcon">🔥</span>
+      <div class="alert-text">
+        <div class="alert-title" id="alertTitle">FIRE DETECTED</div>
+        <div class="alert-msg" id="alertMsg">High confidence fire signature identified.</div>
+      </div>
+    </div>
+
+    <div class="result-cards">
+      <div class="result-card">
+        <div class="result-card-label">Detection Class</div>
+        <div class="result-card-val class-val" id="resClass">Fire</div>
+        <div class="result-card-sub">Primary detection</div>
+      </div>
+      <div class="result-card">
+        <div class="result-card-label">Fire Confidence</div>
+        <div class="result-card-val fire-val" id="resFire">—</div>
+        <div class="result-card-sub">Probability score</div>
+      </div>
+      <div class="result-card">
+        <div class="result-card-label">Smoke Confidence</div>
+        <div class="result-card-val smoke-val" id="resSmoke">—</div>
+        <div class="result-card-sub">Probability score</div>
+      </div>
+      <div class="result-card">
+        <div class="result-card-label">Bounding Box</div>
+        <div class="result-card-val conf-val" id="resBbox" style="font-size:1rem;">—</div>
+        <div class="result-card-sub">Normalized [x,y,w,h]</div>
+      </div>
+    </div>
+
+    <div class="conf-bars" style="margin-top:28px;">
+      <div class="conf-bar-label"><span>🔥 Fire</span><span id="barFirePct">0%</span></div>
+      <div class="conf-bar-wrap"><div class="conf-bar-fill bar-fire" id="barFire"></div></div>
+      <div class="conf-bar-label"><span>💨 Smoke</span><span id="barSmokePct">0%</span></div>
+      <div class="conf-bar-wrap"><div class="conf-bar-fill bar-smoke" id="barSmoke"></div></div>
+      <div class="conf-bar-label"><span>✅ Neutral</span><span id="barNeutralPct">0%</span></div>
+      <div class="conf-bar-wrap"><div class="conf-bar-fill bar-neutral" id="barNeutral"></div></div>
+    </div>
+
+    <button class="dismiss-btn" onclick="dismissAlert()">✕ &nbsp;Dismiss Alert & Reset</button>
+  </div>
+</main>
+
+<script src="test.js"></script>
+</body>
+</html>

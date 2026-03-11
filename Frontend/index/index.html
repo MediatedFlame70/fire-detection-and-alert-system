@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CN2VF-Net | Fire & Smoke Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;600;800;900&family=Space+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<nav>
+  <div class="logo">CN2VF-NET</div>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#stats">Stats</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#test">Try It</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <canvas id="fireCanvas"></canvas>
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    PyTorch &nbsp;·&nbsp; CNN + Vision Transformer &nbsp;·&nbsp; Drone Imagery
+  </div>
+  <h1>Fire & Smoke<br><span>Detection System</span></h1>
+  <p class="hero-sub">CN2VF-Net — A hybrid deep learning model detecting fire and smoke in high-altitude drone imagery with only 1.26M parameters.</p>
+  <div class="hero-btns">
+    <a href="#test" class="btn-primary">🔥 Test the Model</a>
+    <a href="https://github.com/SoudaHimavamsi/fire-detection-and-alert-system" target="_blank" class="btn-secondary">⭐ View on GitHub</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">1.26M</div><div class="stat-label">Parameters</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Classes</div></div>
+    <div class="stat"><div class="stat-num">448²</div><div class="stat-label">Input Size</div></div>
+    <div class="stat"><div class="stat-num">15/15</div><div class="stat-label">Tests Passed</div></div>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-text">scroll</div>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="how">
+  <div class="section-tag">// process</div>
+  <h2 class="section-title">How It Works</h2>
+  <p class="section-desc">A 4-stage pipeline from drone capture to detection output, running in real time.</p>
+  <div class="steps">
+    <div class="step"><div class="step-num">🚁</div><h3>Drone Captures</h3><p>Drone captures a 448×448 RGB image of the target area from high altitude.</p></div>
+    <div class="step"><div class="step-num">🧠</div><h3>CNN Extraction</h3><p>3 CNN stages (MobileNetV3-style) extract local texture and color features.</p></div>
+    <div class="step"><div class="step-num">🔍</div><h3>Vision Transformer</h3><p>2 ViT stages analyze global context and long-range spatial relationships.</p></div>
+    <div class="step"><div class="step-num">🚨</div><h3>Alert & Output</h3><p>Model outputs Fire / Smoke / Neutral class + bounding box + confidence score.</p></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="architecture">
+  <div class="section-tag">// model</div>
+  <h2 class="section-title">Architecture Pipeline</h2>
+  <p class="section-desc">Hybrid CNN + Vision Transformer framework — lightweight yet powerful.</p>
+  <div class="arch-pipeline">
+    <div class="arch-block"><div class="arch-label">Input</div><div class="arch-name">Image</div><div class="arch-detail">448×448×3 RGB</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-block"><div class="arch-label">Stage 1–3</div><div class="arch-name">CNN Backbone</div><div class="arch-detail">MobileNetV3-style Inverted Residuals</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-block"><div class="arch-label">Tokenize</div><div class="arch-name">PatchEmbed</div><div class="arch-detail">CNN maps → Token sequences</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-block"><div class="arch-label">Stage 4–5</div><div class="arch-name">Transformer</div><div class="arch-detail">Multi-Head Self-Attention + FFN</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-block"><div class="arch-label">Fusion</div><div class="arch-name">MultiScale</div><div class="arch-detail">CNN local + ViT global features</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-block"><div class="arch-label">Output</div><div class="arch-name">Detection Head</div><div class="arch-detail">Class + BBox [x,y,w,h]</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="stats">
+  <div class="section-tag">// performance</div>
+  <h2 class="section-title">Model Stats</h2>
+  <p class="section-desc">Optimized for drone deployment — low latency, minimal memory footprint.</p>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-card-num">1.26M</div><div class="stat-card-label">Total Parameters</div></div>
+    <div class="stat-card"><div class="stat-card-num">3</div><div class="stat-card-label">Detection Classes</div></div>
+    <div class="stat-card"><div class="stat-card-num">448px</div><div class="stat-card-label">Input Resolution</div></div>
+    <div class="stat-card"><div class="stat-card-num">15/15</div><div class="stat-card-label">Tests Passed</div></div>
+    <div class="stat-card"><div class="stat-card-num">5</div><div class="stat-card-label">Pipeline Stages</div></div>
+    <div class="stat-card"><div class="stat-card-num">MIT</div><div class="stat-card-label">License</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="dataset">
+  <div class="section-tag">// data</div>
+  <h2 class="section-title">Dataset</h2>
+  <p class="section-desc">Trained on the Kaggle Fire and Smoke Dataset with structured annotations.</p>
+  <div class="dataset-grid">
+    <div class="dataset-card">
+      <h3>📦 Source</h3>
+      <p>Kaggle Fire and Smoke Dataset by DataCluster Labs. Contains annotated fire and smoke images across diverse environments.</p>
+      <div class="code-block">dataset_root/<br>├── images/<br>│ &nbsp; ├── train/<br>│ &nbsp; └── val/<br>└── annotations/<br>&nbsp; &nbsp; ├── train.json<br>&nbsp; &nbsp; └── val.json</div>
+    </div>
+    <div class="dataset-card">
+      <h3>🏷️ Annotation Format</h3>
+      <p>Each image is annotated with a class label and a bounding box in normalized [x, y, w, h] format.</p>
+      <div class="code-block">{<br>&nbsp; "filename": "image_001.jpg",<br>&nbsp; "class": "fire",<br>&nbsp; "bbox": [x, y, w, h]<br>}</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="team">
+  <div class="section-tag">// team</div>
+  <h2 class="section-title">Meet the Team</h2>
+  <p class="section-desc">Two collaborators building intelligent fire detection for a safer world.</p>
+  <div class="team-grid" >
+    <div class="team-card ">
+      <div class="team-avatar">🔥</div>
+      <div class="team-name" href ="" >MediatedFlame70</div>
+      <div class="team-role">Model Developer</div>
+      <div class="team-handle">@MediatedFlame70</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">💻</div>
+      <div class="team-name">SoudaHimavamsi</div>
+      <div class="team-role">Web Developer</div>
+      <div class="team-handle">@SoudaHimavamsi</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="test">
+  <div class="test-inner">
+    <div class="section-tag" style="text-align:center;">// demo</div>
+    <h2 class="section-title" style="text-align:center;">Test the Model</h2>
+    <p class="section-desc" style="text-align:center;margin:0 auto 36px;">Upload an image, a video, or use your live camera to detect fire and smoke instantly.</p>
+    <div class="test-features">
+      <div class="test-feature"><span>🖼️</span> Upload Image</div>
+      <div class="test-feature"><span>🎥</span> Upload Video</div>
+      <div class="test-feature"><span>📷</span> Live Camera</div>
+    </div>
+    <a href="../test/test.html" class="test-btn">🔥 Launch Detection Demo</a>
+    <p class="test-note">⚠️ UI demo — connect Python backend for live model inference</p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">CN2VF-NET</div>
+  <div class="footer-links">
+    <a href="https://github.com/SoudaHimavamsi/fire-detection-and-alert-system" target="_blank">GitHub</a>
+    <a href="https://www.kaggle.com/datasets/dataclusterlabs/fire-and-smoke-dataset" target="_blank">Dataset</a>
+    <a href="../test/test.html">Try Demo</a>
+  </div>
+  <div class="footer-copy">MIT License · Built with PyTorch</div>
+</footer>
+
+<script src="index.js"></script>
+</body>
+</html>
