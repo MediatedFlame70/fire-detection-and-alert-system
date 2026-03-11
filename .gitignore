@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# PyTorch
+*.pth
+*.pt
+
+# Training outputs
+output/
+runs/
+tensorboard/
+
+# Test outputs
+test_images/
+test_predictions/
+test_results/
+
+# Data
+Annotations/
+Datacluster Fire and Smoke Sample/
+*.jpg
+*.png
+*.jpeg
+!cn2vf_net_architecture.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Large files
+*.zip
+*.tar.gz
+*.rar

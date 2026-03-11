@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN2VF-Net - Fire & Smoke Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🔥 CN2VF-Net</h1>
+                <p class="subtitle">AI-Powered Fire and Smoke Detection System</p>
+            </div>
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span id="statusText">Loading...</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="/" class="nav-link active">Detection</a>
+            <a href="/results" class="nav-link">Training Results</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Model Status Card -->
+            <div class="card" id="modelStatus">
+                <h2>📊 System Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Model Status:</span>
+                        <span id="modelStatusText" class="status-value">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Device:</span>
+                        <span id="deviceText" class="status-value">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Training Status:</span>
+                        <span id="trainingStatusText" class="status-value">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Best Accuracy:</span>
+                        <span id="bestAccText" class="status-value">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="card">
+                <h2>📤 Upload Image for Detection</h2>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                    <div class="upload-placeholder">
+                        <div class="upload-icon">📸</div>
+                        <p>Click or drag image here</p>
+                        <p class="upload-hint">Supports JPG, PNG • Max 16MB</p>
+                    </div>
+                </div>
+
+                <!-- Confidence Slider -->
+                <div class="control-group">
+                    <label for="confidenceSlider">Detection Confidence Threshold: <span id="confidenceValue">0.50</span></label>
+                    <input type="range" id="confidenceSlider" min="0" max="100" value="50" class="slider">
+                </div>
+
+                <button id="detectBtn" class="btn btn-primary" disabled>🔍 Detect Fire/Smoke</button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="card" id="resultsCard" style="display: none;">
+                <h2>🎯 Detection Results</h2>
+                
+                <div class="results-container">
+                    <!-- Image Display -->
+                    <div class="image-result">
+                        <img id="resultImage" src="" alt="Detection Result">
+                        <canvas id="bboxCanvas"></canvas>
+                    </div>
+
+                    <!-- Detection Info -->
+                    <div class="detection-info">
+                        <div class="detection-header">
+                            <h3 id="detectionClass">-</h3>
+                            <div class="confidence-badge" id="confidenceBadge">
+                                <span id="confidencePercent">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="probabilities">
+                            <h4>Class Probabilities:</h4>
+                            <div class="prob-bar">
+                                <span class="prob-label">🔥 Fire</span>
+                                <div class="progress">
+                                    <div class="progress-bar fire-bar" id="fireBar" style="width: 0%"></div>
+                                </div>
+                                <span class="prob-value" id="fireProb">0%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <span class="prob-label">💨 Smoke</span>
+                                <div class="progress">
+                                    <div class="progress-bar smoke-bar" id="smokeBar" style="width: 0%"></div>
+                                </div>
+                                <span class="prob-value" id="smokeProb">0%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <span class="prob-label">✅ Neutral</span>
+                                <div class="progress">
+                                    <div class="progress-bar neutral-bar" id="neutralBar" style="width: 0%"></div>
+                                </div>
+                                <span class="prob-value" id="neutralProb">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="bbox-info">
+                            <h4>Bounding Box:</h4>
+                            <div class="bbox-coords">
+                                <span>Center: (<span id="bboxX">-</span>, <span id="bboxY">-</span>)</span>
+                                <span>Size: <span id="bboxW">-</span> × <span id="bboxH">-</span></span>
+                            </div>
+                        </div>
+
+                        <div class="alert-box" id="alertBox" style="display: none;">
+                            <strong>⚠️ ALERT:</strong> <span id="alertText"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>CN2VF-Net: Convolutional Neural Network + Vision Transformer Framework</p>
+            <p>High-Altitude Drone Fire & Smoke Detection System</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

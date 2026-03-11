@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Results - CN2VF-Net</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📈 Training Results</h1>
+                <p class="subtitle">Model Performance & Metrics</p>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="/" class="nav-link">Detection</a>
+            <a href="/results" class="nav-link active">Training Results</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Training Overview -->
+            <div class="card">
+                <h2>🎓 Training Overview</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">🎯</div>
+                        <div class="metric-info">
+                            <h3 id="bestAccuracy">-</h3>
+                            <p>Best Validation Accuracy</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-info">
+                            <h3 id="totalEpochs">-</h3>
+                            <p>Total Epochs</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⏱️</div>
+                        <div class="metric-info">
+                            <h3 id="trainingTime">-</h3>
+                            <p>Training Duration</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">💾</div>
+                        <div class="metric-info">
+                            <h3 id="modelSize">1.26M</h3>
+                            <p>Model Parameters</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Configuration -->
+            <div class="card">
+                <h2>⚙️ Training Configuration</h2>
+                <div class="config-table">
+                    <table>
+                        <tr>
+                            <td><strong>Architecture:</strong></td>
+                            <td>CN2VF-Net (CNN + ViT Hybrid)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Input Size:</strong></td>
+                            <td>448 × 448 × 3</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Batch Size:</strong></td>
+                            <td id="batchSize">-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Learning Rate:</strong></td>
+                            <td id="learningRate">-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Optimizer:</strong></td>
+                            <td>AdamW with Cosine Annealing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Loss Function:</strong></td>
+                            <td>CrossEntropy (cls) + Smooth L1 (bbox)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dataset Size:</strong></td>
+                            <td>100 images (80 train / 20 val)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Architecture Visualization -->
+            <div class="card">
+                <h2>🏗️ Model Architecture</h2>
+                <div class="architecture-diagram">
+                    <div class="arch-stage">
+                        <div class="arch-box stem">Input<br>448×448×3</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box cnn">CNN Stage 1<br>112×112×24</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box cnn">CNN Stage 2<br>56×56×40</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box cnn">CNN Stage 3<br>28×28×80</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box transformer">Patch Embed<br>784×128</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box transformer">ViT Stage 1<br>28×28 tokens</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box transformer">ViT Stage 2<br>14×14 tokens</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box fusion">Multi-Scale Fusion<br>56×56×128</div>
+                        <div class="arch-arrow">↓</div>
+                    </div>
+                    <div class="arch-stage">
+                        <div class="arch-box head">Detection Head<br>Class + BBox</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Insights -->
+            <div class="card">
+                <h2>💡 Performance Insights</h2>
+                <div class="insights">
+                    <div class="insight-item">
+                        <span class="insight-icon">⚡</span>
+                        <div>
+                            <h4>Inference Speed</h4>
+                            <p>~100-200ms per image on CPU, ~10-20ms on GPU</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">🎯</span>
+                        <div>
+                            <h4>Detection Capabilities</h4>
+                            <p>Fire, Smoke, and Neutral classification with bounding box localization</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">🔧</span>
+                        <div>
+                            <h4>Optimizations</h4>
+                            <p>MobileNetV3 backbone, lightweight transformers, depthwise separable convolutions</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">📱</span>
+                        <div>
+                            <h4>Deployment Ready</h4>
+                            <p>Optimized for low-latency drone inference with only 1.26M parameters</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TensorBoard Link -->
+            <div class="card">
+                <h2>📊 View Detailed Metrics</h2>
+                <p>For detailed training curves and metrics visualization, run TensorBoard:</p>
+                <div class="code-block">
+                    <code>tensorboard --logdir ./output</code>
+                </div>
+                <p class="hint">Then open <a href="http://localhost:6006" target="_blank">http://localhost:6006</a> in your browser</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>CN2VF-Net: Convolutional Neural Network + Vision Transformer Framework</p>
+            <p>High-Altitude Drone Fire & Smoke Detection System</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='results.js') }}"></script>
+</body>
+</html>
