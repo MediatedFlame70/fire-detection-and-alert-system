@@ -1,46 +1,55 @@
 """
-Dataset loader for Fire and Smoke Detection Dataset from Kaggle.
-Dataset: https://www.kaggle.com/datasets/dataclusterlabs/fire-and-smoke-dataset
+Dataset loader for the fire/smoke detection dataset.
+
+The workspace dataset is stored in YOLO format:
+
+dataset_root/
+    train/
+        images/
+        labels/
+    val/
+        images/
+        labels/
+
+Each label file contains one or more rows in the form:
+
+class_id x_center y_center width height
+
+All coordinates are normalized to the range [0, 1].
 """
 
-import os
 import json
 from pathlib import Path
-from typing import Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
 import torch
-from torch.utils.data import Dataset, DataLoader
 from PIL import Image
+from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as T
 
 
 class FireSmokeDataset(Dataset):
-    """
-    Dataset loader for Fire and Smoke detection.
-    
-    Expected structure:
-    dataset_root/
-        ├── images/
-        │   ├── train/
-        │   └── val/
-        └── annotations/
-            ├── train.json  (COCO format or custom)
-            └── val.json
-    
-    Annotations format (per image):
-    {
-        "filename": "image_001.jpg",
-        "class": "fire" | "smoke" | "neutral",
-        "bbox": [x, y, w, h]  # normalized or absolute coords
-    }
-    """
-    
+    """Dataset loader that supports YOLO text labels and legacy JSON annotations."""
+
     CLASS_MAPPING = {
         "fire": 0,
         "smoke": 1,
         "neutral": 2,
-        "none": 2,  # Some datasets use "none" instead of "neutral"
+        "none": 2,
     }
-    
+
+    CLASS_ID_MAPPING = {
+        0: "fire",
+        1: "smoke",
+        2: "neutral",
+    }
+
+    CLASS_PRIORITY = {
+        "fire": 0,
+        "smoke": 1,
+        "neutral": 2,
+    }
+
     def __init__(
         self,
         root_dir: str,
@@ -49,62 +58,160 @@ class FireSmokeDataset(Dataset):
         annotation_file: Optional[str] = None,
         transforms: Optional[T.Compose] = None,
     ):
-        """
-        Args:
-            root_dir: Root directory containing images/ and annotations/
-            split: "train" or "val"
-            img_size: Target image size (default 448x448)
-            annotation_file: Custom annotation file path (optional)
-            transforms: Custom transforms (optional, default will be used if None)
-        """
         self.root_dir = Path(root_dir)
         self.split = split
         self.img_size = img_size
-        
-        # Image directory
-        self.img_dir = self.root_dir / "images" / split
-        if not self.img_dir.exists():
-            # Fallback: check if images are directly in root
-            self.img_dir = self.root_dir / split
-            if not self.img_dir.exists():
-                raise ValueError(f"Image directory not found at {self.img_dir}")
-        
-        # Load annotations
-        if annotation_file:
-            anno_path = Path(annotation_file)
-        else:
-            anno_path = self.root_dir / "annotations" / f"{split}.json"
-        
-        self.annotations = self._load_annotations(anno_path)
-        
-        # Transforms
+
+        self.img_dir = self._resolve_image_dir()
+        self.label_dir = self._resolve_label_dir()
+
         if transforms is None:
             self.transforms = self._default_transforms()
         else:
             self.transforms = transforms
-        
-        print(f"Loaded {len(self.annotations)} samples for {split} split")
-    
-    def _load_annotations(self, anno_path: Path) -> list:
-        """Load annotations from JSON file."""
+
+        if annotation_file:
+            self.samples = self._load_json_samples(Path(annotation_file))
+        elif self.label_dir is not None:
+            self.samples = self._load_yolo_samples(self.label_dir)
+        else:
+            json_path = self.root_dir / "annotations" / f"{split}.json"
+            self.samples = self._load_json_samples(json_path)
+
+        print(f"Loaded {len(self.samples)} samples for {split} split")
+
+    def _resolve_image_dir(self) -> Path:
+        candidates = [
+            self.root_dir / self.split / "images",
+            self.root_dir / "images" / self.split,
+            self.root_dir / self.split,
+        ]
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+
+        raise ValueError(f"Image directory not found for split '{self.split}' under {self.root_dir}")
+
+    def _resolve_label_dir(self) -> Optional[Path]:
+        candidates = [
+            self.root_dir / self.split / "labels",
+            self.root_dir / "labels" / self.split,
+        ]
+
+        for candidate in candidates:
+            if candidate.exists() and any(candidate.glob("*.txt")):
+                return candidate
+
+        return None
+
+    def _load_json_samples(self, anno_path: Path) -> List[Dict]:
         if not anno_path.exists():
             raise ValueError(f"Annotation file not found: {anno_path}")
-        
-        with open(anno_path, "r") as f:
-            data = json.load(f)
-        
-        # Handle different JSON formats
+
+        with open(anno_path, "r", encoding="utf-8") as file_handle:
+            data = json.load(file_handle)
+
         if isinstance(data, list):
-            # Direct list of annotations
-            return data
+            records = data
         elif "annotations" in data:
-            # COCO-style format
-            return data["annotations"]
+            records = data["annotations"]
         elif "images" in data:
-            # Another common format
-            return data["images"]
+            records = data["images"]
         else:
             raise ValueError(f"Unknown annotation format in {anno_path}")
+
+        samples: List[Dict] = []
+        for record in records:
+            filename = record.get("filename") or record.get("file_name") or record.get("image")
+            if not filename:
+                continue
+
+            image_path = self.img_dir / filename
+            if not image_path.exists():
+                image_path = self.img_dir.parent / filename
+            if not image_path.exists():
+                continue
+
+            samples.append(
+                {
+                    "source": "json",
+                    "filename": filename,
+                    "image_path": image_path,
+                    "record": record,
+                }
+            )
+
+        return samples
+
+    def _load_yolo_samples(self, label_dir: Path) -> List[Dict]:
+        samples: List[Dict] = []
+        for label_path in sorted(label_dir.glob("*.txt")):
+            image_path = self._find_image_for_label(label_path.stem)
+            if image_path is None:
+                continue
+
+            objects = self._parse_yolo_label_file(label_path)
+            samples.append(
+                {
+                    "source": "yolo",
+                    "filename": image_path.name,
+                    "image_path": image_path,
+                    "label_path": label_path,
+                    "objects": objects,
+                }
+            )
+
+        if not samples:
+            raise ValueError(f"No image/label pairs found in {self.img_dir} and {label_dir}")
+
+        return samples
+
+    def _find_image_for_label(self, label_stem: str) -> Optional[Path]:
+        extensions = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
+
+        for extension in extensions:
+            image_path = self.img_dir / f"{label_stem}{extension}"
+            if image_path.exists():
+                return image_path
+
+        return None
+
+    def _parse_yolo_label_file(self, label_path: Path) -> List[Dict]:
+        objects: List[Dict] = []
+
+        with open(label_path, "r", encoding="utf-8") as file_handle:
+            for raw_line in file_handle:
+                line = raw_line.strip()
+                if not line:
+                    continue
+
+                parts = line.split()
+                if len(parts) < 5:
+                    continue
+
+                try:
+                    class_id = int(float(parts[0]))
+                    bbox = [float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4])]
+                except ValueError:
+                    continue
+
+                class_name = self.CLASS_ID_MAPPING.get(class_id, f"class_{class_id}")
+                objects.append(
+                    {
+                        "class_id": class_id,
+                        "class_name": class_name,
+                        "bbox": bbox,
+                    }
+                )
+
+        return objects
+
+    def _select_primary_object(self, objects: List[Dict]) -> Dict:
+        if not objects:
+            return {"class_id": 2, "class_name": "neutral", "bbox": [0.5, 0.5, 1.0, 1.0]}
+
+        return sorted(objects, key=lambda item: self.CLASS_PRIORITY.get(item["class_name"], 999))[0]
     
     def _default_transforms(self) -> T.Compose:
         """Default image preprocessing pipeline."""
@@ -123,39 +230,20 @@ class FireSmokeDataset(Dataset):
                 T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
     
-    def _normalize_bbox(self, bbox: list, orig_w: int, orig_h: int) -> torch.Tensor:
-        """
-        Normalize bounding box to [0, 1] range.
-        
-        Args:
-            bbox: [x, y, w, h] in absolute coordinates
-            orig_w, orig_h: Original image dimensions
-        
-        Returns:
-            Normalized bbox tensor [x, y, w, h] in [0, 1]
-        """
-        x, y, w, h = bbox
-        
-        # If already normalized (all values < 2), assume it's normalized
-        if all(v <= 2.0 for v in bbox):
+    def _normalize_bbox(self, bbox: List[float], orig_w: int, orig_h: int) -> torch.Tensor:
+        if all(0.0 <= value <= 1.0 for value in bbox):
             return torch.tensor(bbox, dtype=torch.float32)
-        
-        # Normalize to [0, 1]
-        x_norm = x / orig_w
-        y_norm = y / orig_h
-        w_norm = w / orig_w
-        h_norm = h / orig_h
-        
-        # Clamp to valid range
-        x_norm = max(0.0, min(1.0, x_norm))
-        y_norm = max(0.0, min(1.0, y_norm))
-        w_norm = max(0.0, min(1.0, w_norm))
-        h_norm = max(0.0, min(1.0, h_norm))
-        
+
+        x, y, w, h = bbox
+        x_norm = max(0.0, min(1.0, x / orig_w))
+        y_norm = max(0.0, min(1.0, y / orig_h))
+        w_norm = max(0.0, min(1.0, w / orig_w))
+        h_norm = max(0.0, min(1.0, h / orig_h))
+
         return torch.tensor([x_norm, y_norm, w_norm, h_norm], dtype=torch.float32)
     
     def __len__(self) -> int:
-        return len(self.annotations)
+        return len(self.samples)
     
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         """
@@ -167,58 +255,46 @@ class FireSmokeDataset(Dataset):
                 "filename": str
             }
         """
-        anno = self.annotations[idx]
-        
-        # Load image
-        if "filename" in anno:
-            img_name = anno["filename"]
-        elif "file_name" in anno:
-            img_name = anno["file_name"]
-        elif "image" in anno:
-            img_name = anno["image"]
-        else:
-            raise KeyError(f"Cannot find image filename in annotation: {anno.keys()}")
-        
-        img_path = self.img_dir / img_name
-        if not img_path.exists():
-            # Try without subdirectory
-            img_path = self.img_dir.parent / img_name
-        
-        image = Image.open(img_path).convert("RGB")
+        sample = self.samples[idx]
+
+        image = Image.open(sample["image_path"]).convert("RGB")
         orig_w, orig_h = image.size
-        
-        # Get class label
-        if "class" in anno:
-            class_str = anno["class"].lower()
-        elif "category" in anno:
-            class_str = anno["category"].lower()
-        elif "label" in anno:
-            class_str = anno["label"].lower()
+
+        if sample["source"] == "yolo":
+            primary_object = self._select_primary_object(sample["objects"])
+            class_label = primary_object["class_id"]
+            bbox_norm = torch.tensor(primary_object["bbox"], dtype=torch.float32)
         else:
-            class_str = "neutral"  # Default
-        
-        class_label = self.CLASS_MAPPING.get(class_str, 2)  # Default to neutral
-        
-        # Get bounding box
-        if "bbox" in anno:
-            bbox = anno["bbox"]
-        elif "bounding_box" in anno:
-            bbox = anno["bounding_box"]
-        else:
-            # Default: entire image
-            bbox = [0.0, 0.0, 1.0, 1.0]
-        
-        # Normalize bbox
-        bbox_norm = self._normalize_bbox(bbox, orig_w, orig_h)
-        
-        # Apply transforms
+            record = sample["record"]
+
+            if "class" in record:
+                class_str = str(record["class"]).lower()
+                class_label = self.CLASS_MAPPING.get(class_str, 2)
+            elif "category" in record:
+                class_str = str(record["category"]).lower()
+                class_label = self.CLASS_MAPPING.get(class_str, 2)
+            elif "label" in record:
+                class_str = str(record["label"]).lower()
+                class_label = self.CLASS_MAPPING.get(class_str, 2)
+            else:
+                class_label = 2
+
+            if "bbox" in record:
+                bbox = record["bbox"]
+            elif "bounding_box" in record:
+                bbox = record["bounding_box"]
+            else:
+                bbox = [0.5, 0.5, 1.0, 1.0]
+
+            bbox_norm = self._normalize_bbox(bbox, orig_w, orig_h)
+
         image_tensor = self.transforms(image)
-        
+
         return {
             "image": image_tensor,
             "class_label": torch.tensor(class_label, dtype=torch.long),
             "bbox": bbox_norm,
-            "filename": img_name,
+            "filename": sample["filename"],
         }
 
 

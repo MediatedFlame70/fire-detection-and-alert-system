@@ -49,6 +49,10 @@ train_split.txt
 val_split.txt
 test_split.txt
 
+# Local dataset and generated evaluation artifacts
+fire_smoke/
+evaluation_results/
+
 # IDE
 .vscode/
 .idea/
@@ -108,4 +112,3 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
->>>>>>> bba37dba64f081f93fd79f554966f380eb26c5fa

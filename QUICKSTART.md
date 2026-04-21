@@ -15,13 +15,15 @@ pip install -r requirements.txt
 3. Ensure structure:
    ```
    fire_smoke_data/
-   ├── images/
-   │   ├── train/
-   │   └── val/
-   └── annotations/
-       ├── train.json
-       └── val.json
+     ├── train/
+     │   ├── images/
+     │   └── labels/
+     └── val/
+       ├── images/
+       └── labels/
    ```
+
+     Each `.txt` label file should use YOLO rows in the form `class_id x_center y_center width height` with normalized coordinates.
 
 ### 3. Test Dataset Loading
 

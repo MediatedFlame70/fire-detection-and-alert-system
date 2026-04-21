@@ -32,31 +32,21 @@ PyTorch implementation of CN2VF-Net (Convolutional Neural Network and Vision Tra
 
 ```
 dataset_root/
-├── images/
-│   ├── train/
-│   │   ├── image_001.jpg
-│   │   ├── image_002.jpg
-│   │   └── ...
-│   └── val/
-│       ├── image_001.jpg
-│       └── ...
-└── annotations/
-    ├── train.json
-    └── val.json
+├── train/
+│   ├── images/
+│   └── labels/
+└── val/
+    ├── images/
+    └── labels/
 ```
 
 ### Annotation Format
 
-```json
-[
-  {
-    "filename": "image_001.jpg",
-    "class": "fire",
-    "bbox": [x, y, w, h]
-  },
-  ...
-]
+```text
+class_id x_center y_center width height
 ```
+
+Class IDs in this dataset are interpreted as `0 = fire`, `1 = smoke`, `2 = neutral`.
 
 ## Installation
 
@@ -80,6 +70,8 @@ Download the dataset from Kaggle and prepare it according to the structure above
 ```bash
 python dataset.py <path_to_dataset>
 ```
+
+Where `<path_to_dataset>` points to the folder that contains `train/images`, `train/labels`, `val/images`, and `val/labels`.
 
 ### 3. Train Model
 
